@@ -1,3 +1,4 @@
+//Deshawn Bryan
 package Java_p;
 
 import java.util.LinkedList;
@@ -40,3 +41,4 @@ public class TriageAnalyzer
         return deviation > 10;  // If deviation is more than 10, flag as abnormal
     }
 }
+
