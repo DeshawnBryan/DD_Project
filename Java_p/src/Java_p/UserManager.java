@@ -8,6 +8,11 @@ public class UserManager {
     private List<HospitalSystem.User> users = new ArrayList<>();
     private List<String> auditLogs = new ArrayList<>();
     private final Scanner sc = new Scanner(System.in);
+    private AuthSystem auth;
+
+    public UserManager(AuthSystem authSystem) {
+        this.auth = authSystem;
+    }
 
     // Check Password Rules
     private boolean isValidPassword(String pw) {
@@ -52,7 +57,10 @@ public class UserManager {
         }
 
         HospitalSystem.User newUser = new HospitalSystem.User(username, id, pw);
+        
         users.add(newUser);
+        auth.registerUser(newUser);
+        
         auditLogs.add("User created: " + username + " at " + new Date());
 
         System.out.println("User added successfully!");
