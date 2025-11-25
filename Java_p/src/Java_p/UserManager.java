@@ -10,6 +10,9 @@ public class UserManager {
     private final Scanner sc = new Scanner(System.in);
     private AuthSystem auth;
 
+    // Reference to AuthSystem so new users can LOGIN
+    private AuthSystem auth;
+    
     public UserManager(AuthSystem authSystem) {
         this.auth = authSystem;
     }
@@ -35,7 +38,7 @@ public class UserManager {
         return false;
     }
 
-    // ADD USER
+    // ADD USER (Amin Only)
     public void addUser() {
         System.out.println("\nAdd User");
         System.out.print("Enter username: ");
@@ -58,7 +61,9 @@ public class UserManager {
 
         HospitalSystem.User newUser = new HospitalSystem.User(username, id, pw);
         
+        // Store internally in Usermanager
         users.add(newUser);
+        // Register user in AuthSystem so they can Login
         auth.registerUser(newUser);
         
         auditLogs.add("User created: " + username + " at " + new Date());
@@ -66,7 +71,7 @@ public class UserManager {
         System.out.println("User added successfully!");
     }
 
-    // VIEW USER
+    // View USER
     public void viewUser() {
         System.out.print("Enter username: ");
         String username = sc.nextLine();
@@ -85,7 +90,7 @@ public class UserManager {
     // VIEW ALL USERS
     public void viewAllUsers() {
         if (users.isEmpty()) {
-            System.out.println("No users Found.");
+            System.out.println("No user records found.");
             return;
         }
 
@@ -95,7 +100,7 @@ public class UserManager {
         }
     }
 
-    // UPDATE USER
+    // UPDATE USER PASSWORD
     public void updateUser() {
         System.out.print("Enter username to update: ");
         String username = sc.nextLine();
@@ -111,10 +116,12 @@ public class UserManager {
                     return;
                 }
 
-                u.setPassword(newPw);
+                u.setPassword(newPw); // update within Usermanager
+                auth.updatePassword(username, newPw); // update in AuthSystem
+
                 auditLogs.add("Password updated for: " + username + " at " + new Date());
 
-                System.out.println("User updated successfully.");
+                System.out.println("User updated successfully!");
                 return;
             }
         }
@@ -130,9 +137,11 @@ public class UserManager {
         while (it.hasNext()) {
             HospitalSystem.User u = it.next();
             if (u.getUsername().equals(username)) {
-                it.remove();
+                it.remove(); // remove from Usermanager storage
+                auth.deleteUser(username); // remove from authSystem
+
                 auditLogs.add("User deleted: " + username + " at " + new Date());
-                System.out.println("User deleted.");
+                System.out.println("User deleted successfully!");
                 return;
             }
         }
@@ -142,7 +151,7 @@ public class UserManager {
     // AUDIT LOGS
     public void viewAuditLogs() {
         if (auditLogs.isEmpty()) {
-            System.out.println("No audit logs yet.");
+            System.out.println("No audit logs available.");
             return;
         }
 
