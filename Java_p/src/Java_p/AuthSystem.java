@@ -1,40 +1,38 @@
 // Tassianna Price - 2403066
 package Java_p;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 
 public class AuthSystem {
 
+    // Stores all users available to log in (key = username)
     private Map<String, HospitalSystem.User> users = new HashMap<>();
-    private Map<String, HospitalSystem.Role> roles = new HashMap<>();
-
+    // Stores the currently logged-in user (null if none)
     private HospitalSystem.User currentUser = null;
+
     private final Scanner sc = new Scanner(System.in);
 
-    // Setup roles and permissions
-    public AuthSystem() {
+    // User registration – Called by UserManager.addUser()
+    // Adds a new user to the system so that they can log in.
+    public void registerUser(HospitalSystem.User user) {
+        users.put(user.getUsername(), user);
+    }
 
-        // Admin Role
-        HospitalSystem.Role admin = new HospitalSystem.Role("Admin");
-        admin.addPermission(new HospitalSystem.Permission("createUser"));
-        admin.addPermission(new HospitalSystem.Permission("deleteUser"));
-        admin.addPermission(new HospitalSystem.Permission("updateSystemConfig"));
-        roles.put("Admin", admin);
+    // Password update – Called by UserManager.updateUser()
+    // Updates a user's password both in AuthSystem and UserManager.
+    public void updatePassword(String username, String newPw) {
+        HospitalSystem.User user = users.get(username);
+        if (user != null) {
+            user.setPassword(newPw);
+        }
+    }
 
-        // Manager Role
-        HospitalSystem.Role manager = new HospitalSystem.Role("Manager");
-        manager.addPermission(new HospitalSystem.Permission("approveTransaction"));
-        manager.addPermission(new HospitalSystem.Permission("viewReports"));
-        roles.put("Manager", manager);
-
-        // User Role
-        HospitalSystem.Role user = new HospitalSystem.Role("User");
-        user.addPermission(new HospitalSystem.Permission("viewOwnData"));
-        roles.put("User", user);
-
-        // default admin account
-        HospitalSystem.User adminUser = new HospitalSystem.User("admin", "1000", "Admin@123");
-        users.put("admin", adminUser);
+    // Delete user – Called by UserManager.deleteUser()
+    // Deletes a user from the login system.
+    public void deleteUser(String username) {
+        users.remove(username);
     }
 
     // Login Function
@@ -45,51 +43,56 @@ public class AuthSystem {
         System.out.print("Enter password: ");
         String password = sc.nextLine();
 
-        if (!users.containsKey(username)) {
+        HospitalSystem.User user = users.get(username);
+
+        if (user == null) {
             System.out.println("No such user.");
             return false;
         }
 
-        HospitalSystem.User u = users.get(username);
-        if (u.login(username, password)) {
-            currentUser = u;
-            System.out.println("Logged in as: " + username);
-            return true;
+        if (!user.getPassword().equals(password)) {
+            System.out.println("Incorrect password.");
+            return false;
         }
 
-        return false;
+        currentUser = user;
+        System.out.println("Login successful! Welcome " + user.getUsername() + " (" + user.getRole() + ")");
+        return true;
     }
 
-    // Logout Function
+    // Logout (Logs out the current user and resets currentUser to null)
     public void logout() {
-        if (currentUser != null) {
-            System.out.println("User " + currentUser.getUsername() + " logged out.");
-            currentUser = null;
-        }
+        currentUser = null;
+        System.out.println("Logged out successfully.");
     }
 
-    // Get Current User
+    // Setup roles and permissions (Determines whether the logged-in user has the given permission.)
+    public boolean hasPermission(String permission) {
+        if (currentUser == null)
+            return false;
+
+        String role = currentUser.getRole();
+
+        switch (role) {
+            case "Admin":
+                return permission.equals("createUser")
+                        || permission.equals("deleteUser")
+                        || permission.equals("updateSystemConfig");
+             
+            case "Manager":
+                return permission.equals("approveTransaction")
+                        || permission.equals("viewReports");
+
+            case "User":
+                return permission.equals("viewOwnData");  
+                
+            default:
+                return false; 
+        }
+    }  
+    
+    // Get Current User (Returns the logged-in user object)
     public HospitalSystem.User getCurrentUser() {
         return currentUser;
-    }
-
-    // ADD users from UserManager to AuthSystem
-    public void registerUser(HospitalSystem.User u) {
-        users.put(u.getUsername(), u);
-    }
-
-    // Get Role for a user
-    // EVERYONE EXCEPT "admin" IS TREATED AS REGULAR USER
-    public HospitalSystem.Role getRoleForUser(String username) {
-        if (username.equals("admin")) return roles.get("Admin");
-        return roles.get("User");
-    }
-
-    // Permission check
-    public boolean hasPermission(String permName) {
-        if (currentUser == null) return false;
-
-        HospitalSystem.Role r = getRoleForUser(currentUser.getUsername());
-        return r.hasPermission(permName);
-    }
+    }    
 }
